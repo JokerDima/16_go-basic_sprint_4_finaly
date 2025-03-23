@@ -68,7 +68,7 @@ func DayActionInfo(data string, weight, height float64) string {
 	}
 
 	distance := float64(steps) * StepLength
-	distanceKm := distance * 1000
+	distanceKm := distance / 1000
 
 	spentCalories := spentcalories.WalkingSpentCalories(steps, weight, height, duration)
 
