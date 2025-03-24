@@ -3,7 +3,6 @@ package spentcalories
 import (
 	"errors"
 	"fmt"
-	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -20,48 +19,29 @@ const (
 	walkingSpeedHeightMultiplier       = 0.029 // множитель роста при ходьбе.
 )
 
-var (
-	errData = errors.New("error data. No data for conversion [sc]")
-	errConv = errors.New("error conversion. The data has not been converted correctly [sc]")
-)
-
 func parseTraining(data string) (int, string, time.Duration, error) {
 	if len(data) == 0 {
-		return 0, "", 0, errData
+		return 0, "", 0, errors.New("error data. No data for conversion")
 	}
 
 	dataParse := strings.Split(data, ",")
 	if len(dataParse) != 3 {
-		return 0, "", 0, errConv
-	}
-
-	isStringSteps := reflect.TypeOf(dataParse[0])
-	isStringActivity := reflect.TypeOf(dataParse[1])
-	isStringDuration := reflect.TypeOf(dataParse[2])
-	isString := reflect.TypeOf("String")
-
-	if (isStringSteps != isString) || (isStringActivity != isString) || (isStringDuration != isString) {
-		return 0, "", 0, errConv
+		return 0, "", 0, errors.New("error conversion. The data has not been converted correctly")
 	}
 
 	steps, err := strconv.Atoi(dataParse[0])
-	if err != nil {
-		return 0, "", 0, err
-	} else if steps <= 0 {
-		return 0, "", 0, errConv
+	if (err != nil) || (steps <= 0) {
+		return 0, "", 0, errors.New("error data. Step count error")
 	}
 
 	activity := dataParse[1]
 
 	duration, err := time.ParseDuration(dataParse[2])
-	if err != nil {
-		return 0, "", 0, err
-	} else if duration <= 0 {
-		return 0, "", 0, errConv
+	if (err != nil) || (duration <= 0) {
+		return 0, "", 0, errors.New("error data. Duration error")
 	}
 
 	return steps, activity, duration, nil
-
 }
 
 // distance возвращает дистанцию(в километрах), которую преодолел пользователь за время тренировки.
@@ -70,14 +50,9 @@ func parseTraining(data string) (int, string, time.Duration, error) {
 //
 // steps int — количество совершенных действий (число шагов при ходьбе и беге).
 func distance(steps int) float64 {
-	if steps <= 0 {
-		return 0
-	}
-
-	distance := (float64(steps) * lenStep) / float64(mInKm)
+	distance := (float64(steps) * lenStep) / mInKm
 
 	return distance
-
 }
 
 // meanSpeed возвращает значение средней скорости движения во время тренировки.
@@ -87,17 +62,12 @@ func distance(steps int) float64 {
 // steps int — количество совершенных действий(число шагов при ходьбе и беге).
 // duration time.Duration — длительность тренировки.
 func meanSpeed(steps int, duration time.Duration) float64 {
-	if (steps <= 0) || (duration <= 0) {
-		return 0
-	}
-
 	distance := distance(steps)
 	durationInHours := duration.Hours()
 
 	averageSpeed := distance / durationInHours
 
 	return averageSpeed
-
 }
 
 // RunningSpentCalories возвращает количество потраченных колорий при беге.
@@ -108,10 +78,6 @@ func meanSpeed(steps int, duration time.Duration) float64 {
 // weight float64 — вес пользователя.
 // duration time.Duration — длительность тренировки.
 func RunningSpentCalories(steps int, weight float64, duration time.Duration) float64 {
-	if (steps <= 0) || (weight <= 0) || (duration <= 0) {
-		return 0
-	}
-
 	meanSpeed := meanSpeed(steps, duration)
 
 	spentCalories := ((runningCaloriesMeanSpeedMultiplier * meanSpeed) - runningCaloriesMeanSpeedShift) * weight
@@ -128,10 +94,6 @@ func RunningSpentCalories(steps int, weight float64, duration time.Duration) flo
 // weight float64 — вес пользователя.
 // height float64 — рост пользователя.
 func WalkingSpentCalories(steps int, weight, height float64, duration time.Duration) float64 {
-	if (steps <= 0) || (weight <= 0) || (height <= 0) || (duration <= 0) {
-		return 0
-	}
-
 	meanSpeed := meanSpeed(steps, duration)
 	durationInHours := duration.Hours()
 
@@ -153,9 +115,7 @@ func TrainingInfo(data string, weight, height float64) string {
 
 	steps, activity, duration, err := parseTraining(data)
 	if err != nil {
-		return ""
-	} else if (steps == 0) || (len(activity) == 0) || (duration == 0) {
-		return ""
+		return err.Error()
 	}
 
 	durationInHours := duration.Hours()
