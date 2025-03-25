@@ -30,14 +30,20 @@ func parseTraining(data string) (int, string, time.Duration, error) {
 	}
 
 	steps, err := strconv.Atoi(dataParse[0])
-	if (err != nil) || (steps <= 0) {
+	if err != nil {
+		return 0, "", 0, err
+	}
+	if steps < 0 {
 		return 0, "", 0, errors.New("error data. Step count error")
 	}
 
 	activity := dataParse[1]
 
 	duration, err := time.ParseDuration(dataParse[2])
-	if (err != nil) || (duration <= 0) {
+	if err != nil {
+		return 0, "", 0, err
+	}
+	if duration < 0 {
 		return 0, "", 0, errors.New("error data. Duration error")
 	}
 
@@ -62,6 +68,10 @@ func distance(steps int) float64 {
 // steps int — количество совершенных действий(число шагов при ходьбе и беге).
 // duration time.Duration — длительность тренировки.
 func meanSpeed(steps int, duration time.Duration) float64 {
+	if duration == 0 {
+		return 0
+	}
+
 	distance := distance(steps)
 	durationInHours := duration.Hours()
 
@@ -109,10 +119,6 @@ func WalkingSpentCalories(steps int, weight, height float64, duration time.Durat
 // data string - строка с данными.
 // weight, height float64 — вес и рост пользователя.
 func TrainingInfo(data string, weight, height float64) string {
-	if (len(data) == 0) || (weight <= 0) || (height <= 0) {
-		return ""
-	}
-
 	steps, activity, duration, err := parseTraining(data)
 	if err != nil {
 		return err.Error()

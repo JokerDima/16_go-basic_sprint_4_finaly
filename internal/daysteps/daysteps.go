@@ -16,6 +16,9 @@ const (
 )
 
 func parsePackage(data string) (int, time.Duration, error) {
+	if len(data) == 0 {
+		return 0, 0, errors.New("error data. No data for conversion")
+	}
 
 	dataParse := strings.Split(data, ",")
 	if len(dataParse) != 2 {
@@ -23,12 +26,18 @@ func parsePackage(data string) (int, time.Duration, error) {
 	}
 
 	steps, err := strconv.Atoi(dataParse[0])
-	if (err != nil) || (steps <= 0) {
+	if err != nil {
+		return 0, 0, err
+	}
+	if steps < 0 {
 		return 0, 0, errors.New("error data. Step count error")
 	}
 
 	duration, err := time.ParseDuration(dataParse[1])
-	if (err != nil) || (duration <= 0) {
+	if err != nil {
+		return 0, 0, err
+	}
+	if duration < 0 {
 		return 0, 0, errors.New("error data. Duration error")
 	}
 
@@ -42,13 +51,13 @@ func parsePackage(data string) (int, time.Duration, error) {
 // Если пакет валидный, он добавляется в слайс storage, который возвращает
 // функция. Если пакет невалидный, storage возвращается без изменений.
 func DayActionInfo(data string, weight, height float64) string {
-	if (len(data) == 0) || (weight == 0) || (height == 0) {
-		return ""
-	}
-
 	steps, duration, err := parsePackage(data)
 	if err != nil {
-		return err.Error()
+		e := fmt.Sprintf("%v\n", err)
+		return e
+	}
+	if (steps == 0) || (duration == 0) {
+		return ""
 	}
 
 	distance := float64(steps) * StepLength
